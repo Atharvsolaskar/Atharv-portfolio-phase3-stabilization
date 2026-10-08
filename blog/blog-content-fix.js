@@ -48,7 +48,7 @@
   };
 
   function currentKey(){
-    var path = window.location.pathname.replace(/\/+$/, "");
+    var path = window.location.pathname.replace(/\/index\.html$/, "/").replace(/\/+$/, "");
     var parts = path.split("/");
     var last = parts[parts.length - 1];
     if (last.indexOf(".html") === -1) last = last + ".html";
@@ -65,7 +65,7 @@
 
   function slugOf(href){
     if (!href) return "";
-    var h = href.split("?")[0].split("#")[0].replace(/\/+$/, "");
+    var h = href.split("?")[0].split("#")[0].replace(/\/index\.html$/, "/").replace(/\/+$/, "");
     var parts = h.split("/");
     var last = parts[parts.length - 1];
     if (last.slice(-5) === ".html") last = last.slice(0, -5);
@@ -197,6 +197,18 @@
     try{return s?new URL('../',s).href:location.origin+'/'}catch(e){return location.origin+'/'}
   })();
   var MAP={home:'',index:'',about:'about.html',works:'works.html',work:'works.html',contact:'contact.html',blog:'blog.html',insights:'blog.html',waitlist:'waitlist.html',backtohome:'',backtohomebacktohome:''};
+  // Canonicalize only the nine exported articles; reuse real document navigation.
+  // Framer emits extensionless links, but every article also has a static .html file.
+  var ARTICLE_SLUGS = ["how-fixing-your-website-s-ux-can-increase-conversion", "how-to-write-copy-that-fits-your-template", "social-media-design-that-stops-the-scroll", "the-power-of-branding-more-than-just-a-logo", "the-real-cost-of-a-bad-website", "what-to-look-for-in-a-premium-framer-template", "why-clarity-beats-creativity-in-web-design", "why-motion-design-makes-your-website-feel-alive", "why-your-first-website-should-use-a-template"];
+  function articleURL(u) {
+    var base = new URL(SR);
+    if (u.origin !== base.origin) return null;
+    var match = u.pathname.match(/\/blog\/([^/]+?)(?:\.html|\/index\.html|\/)?$/);
+    if (!match || ARTICLE_SLUGS.indexOf(match[1]) < 0) return null;
+    var result = new URL('blog/' + match[1] + '.html', SR);
+    result.search = u.search; result.hash = u.hash;
+    return result;
+  }
   function is404(){return /(^|\/)404(\.html)?$/.test(location.pathname)||/404/.test(document.title||'');}
   function routeFor(a){
     if((a.getAttribute('data-framer-name')||'').toLowerCase()==='logo')return '';
@@ -216,6 +228,8 @@
     var r=routeFor(a);
     var want,got;
     try{got=new URL(raw,location.href);want=(r===null)?got:new URL(r,SR)}catch(err){return}
+    var article = r === null ? articleURL(got) : null;
+    if(article){got=article;want=article;}
     if(!inSite(got)||!inSite(want))return;
     if(r===null&&!/(\.html$|\/$)/.test(want.pathname))return;
     // Framer's client router renders destinations from the compiled route chunks instead of
