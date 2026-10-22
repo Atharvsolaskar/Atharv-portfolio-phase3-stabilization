@@ -439,3 +439,28 @@
   });
   resume();
 })();
+
+/* Keep policy links on the approved static documents. Framer may rewrite their
+   hrefs relative to a nested route even when the source link is root-relative. */
+(function(){
+  'use strict';
+  function canonicalizeLegalLinks(){
+    document.querySelectorAll('a[href]').forEach(function(a){
+      var raw=a.getAttribute('href')||'',url;
+      try{url=new URL(raw,document.baseURI)}catch(e){return}
+      if(url.origin!==location.origin)return;
+      var match=url.pathname.match(/\/legal\/(privacy-policy|terms-of-service)(?:\.html|\/index\.html|\/)?$/);
+      if(!match)return;
+      var canonical='/legal/'+match[1]+'.html'+url.search+url.hash;
+      if(raw!==canonical)a.setAttribute('href',canonical);
+    });
+  }
+  canonicalizeLegalLinks();
+  document.addEventListener('DOMContentLoaded',canonicalizeLegalLinks);
+  addEventListener('pageshow',canonicalizeLegalLinks);
+  if(window.MutationObserver){
+    new MutationObserver(canonicalizeLegalLinks).observe(document.documentElement,{
+      childList:true,subtree:true,attributes:true,attributeFilter:['href']
+    });
+  }
+})();
