@@ -1,4 +1,4 @@
-// Netlify newsletter transport for the Home and About footers only.
+// Netlify newsletter transport for the Home, About, Blog and Works footers.
 (function () {
   'use strict';
   var FORM_NAME = 'atharv-newsletter';
